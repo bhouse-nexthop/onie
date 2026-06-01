@@ -1,0 +1,114 @@
+name: Build ONIE (kvm_x86_64)
+
+# Builds the generic amd64 ONIE image for the kvm_x86_64 target, intended
+# to run as a VM under KVM/QEMU.  The build follows the upstream-recommended
+# containerized flow (see contrib/build-env and machine/kvm_x86_64/INSTALL),
+# with secure boot disabled so no signing keys are required.
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'build-config/**'
+      - 'machine/kvm_x86_64/**'
+      - '.github/workflows/build-onie.yml'
+      - '.github/onie-build/**'
+  pull_request:
+    paths:
+      - 'build-config/**'
+      - 'machine/kvm_x86_64/**'
+      - '.github/workflows/build-onie.yml'
+      - '.github/onie-build/**'
+
+# Cancel an in-progress run when a newer commit is pushed to the same ref,
+# so stacked pushes don't pile up concurrent builds.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build kvm_x86_64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Determine host UID/GID
+        id: ids
+        run: |
+          echo "uid=$(id -u)" >> "$GITHUB_OUTPUT"
+          echo "gid=$(id -g)" >> "$GITHUB_OUTPUT"
+
+      - name: Build the ONIE build-environment image
+        uses: docker/build-push-action@v6
+        with:
+          context: .github/onie-build
+          tags: onie-build-env:latest
+          build-args: |
+            UID=${{ steps.ids.outputs.uid }}
+            GID=${{ steps.ids.outputs.gid }}
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Disable secure boot in the kernel config
+        # The kvm_x86_64 kernel config defaults to expecting signing keys.
+        # The repo ships a config-insecure variant for non-secure-boot builds.
+        run: cp machine/kvm_x86_64/kernel/config-insecure machine/kvm_x86_64/kernel/config
+
+      # Cache the crosstool-NG cross toolchain (build/x-tools) and the
+      # crosstool-NG tool itself (build/crosstool-ng).  This is the long
+      # pole of a cold build.  The key is tied to every input that can
+      # change the toolchain -- including the Dockerfile, since it defines
+      # the compiler/host environment the toolchain is built in.  No loose
+      # restore-keys: any input change forces a clean rebuild rather than
+      # restoring a mismatched toolchain.
+      - name: Restore cross-toolchain cache
+        id: xtools-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            build/x-tools
+            build/crosstool-ng
+          key: onie-xtools-kvm_x86_64-${{ hashFiles('build-config/make/xtools.make', 'build-config/make/crosstool-ng.make', 'build-config/make/compiler.make', 'build-config/conf/crosstool/**', 'patches/crosstool-NG/**', '.github/onie-build/Dockerfile') }}
+
+      - name: Build cross toolchain
+        run: |
+          docker run --rm --privileged \
+            -v "${PWD}:/onie" \
+            onie-build-env \
+            bash -lc 'cd build-config && make -j"$(nproc)" \
+              MACHINE=kvm_x86_64 \
+              SECURE_BOOT_ENABLE=no \
+              SECURE_BOOT_EXT=no \
+              SECURE_GRUB=no \
+              xtools'
+
+      # Save only on a cache miss, and only after the toolchain build above
+      # succeeded (default if: success()), so a broken toolchain is never
+      # cached.  Running before the full build means a later-stage failure
+      # still preserves the toolchain for the next run.
+      - name: Save cross-toolchain cache
+        if: steps.xtools-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            build/x-tools
+            build/crosstool-ng
+          key: ${{ steps.xtools-cache.outputs.cache-primary-key }}
+
+      - name: Build ONIE
+        run: |
+          docker run --rm --privileged \
+            -v "${PWD}:/onie" \
+            onie-build-env \
+            bash -lc 'cd build-config && make -j"$(nproc)" \
+              MACHINE=kvm_x86_64 \
+              SECURE_BOOT_ENABLE=no \
+              SECURE_BOOT_EXT=no \
+              SECURE_GRUB=no \
+              all recovery-iso'
