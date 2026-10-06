@@ -148,6 +148,15 @@ $(BUSYBOX_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(BUSYBOX_BUILD_STAMP)
 	$(Q) chmod 4755 $(SYSROOTDIR)/bin/busybox
 	$(Q) touch $@
 
+# Check every machine's busybox patches and config overrides against this
+# busybox and base config -- not just the current MACHINE's.  See
+# scripts/check-busybox-configs.
+PHONY += busybox-config-check
+busybox-config-check: $(BUSYBOX_DOWNLOAD_STAMP)
+	$(Q) $(SCRIPTDIR)/check-busybox-configs $(DOWNLOADDIR)/$(BUSYBOX_TARBALL) \
+		$(BUSYBOX_SRCPATCHDIR)/series $(BUSYBOX_CONFIG) $(PROJECTDIR)/machine \
+		conf/busybox-check-known-failures
+
 MACHINE_CLEAN += busybox-clean
 busybox-clean:
 	$(Q) rm -rf $(BUSYBOX_BUILD_DIR)
