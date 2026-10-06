@@ -1668,12 +1668,6 @@ index 0000000..65ae160
 --- /dev/null
 +++ b/miscutils/sys_eeprom.c
 @@ -0,0 +1,194 @@
-+//applet:IF_SYS_EEPROM(APPLET_ODDNAME(onie-syseeprom, onie_syseeprom, BB_DIR_USR_BIN, BB_SUID_DROP, onie_syseeprom))
-+
-+//kbuild:lib-$(CONFIG_SYS_EEPROM)  += sys_eeprom.o onie_tlvinfo.o
-+//kbuild:lib-$(CONFIG_SYS_EEPROM_DEVICE_I2C) += sys_eeprom_i2c.o 24cXX.o
-+//kbuild:lib-$(CONFIG_SYS_EEPROM_DEVICE_MTD) += sys_eeprom_mtd.o
-+
 +#include "libbb.h"
 +#include "onie_tlvinfo.h"
 +#include <getopt.h>
@@ -1693,6 +1687,12 @@ index 0000000..65ae160
 +//usage:     "\n	-s	Set a TLV code to a value."
 +//usage:     "\n		If no value, TLV is deleted."
 +//usage:       "\n"
++
++//applet:IF_SYS_EEPROM(APPLET_ODDNAME(onie-syseeprom, onie_syseeprom, BB_DIR_USR_BIN, BB_SUID_DROP, onie_syseeprom))
++
++//kbuild:lib-$(CONFIG_SYS_EEPROM)  += sys_eeprom.o onie_tlvinfo.o
++//kbuild:lib-$(CONFIG_SYS_EEPROM_DEVICE_I2C) += sys_eeprom_i2c.o 24cXX.o
++//kbuild:lib-$(CONFIG_SYS_EEPROM_DEVICE_MTD) += sys_eeprom_mtd.o
 +
 +static void cmd_usage(void)
 +{
