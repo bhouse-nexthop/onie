@@ -57,6 +57,9 @@ $(IPMITOOL_SOURCE_STAMP): $(USER_TREE_STAMP) | $(IPMITOOL_DOWNLOAD_STAMP)
 	fi
 	$(Q) touch $@
 
+# ONIE ships no readline, so the interactive "ipmitool shell" is off.
+# 1.8.18 dropped it silently when readline was missing; 1.8.19 fails
+# configure instead, so say so explicitly.
 ipmitool-configure: $(IPMITOOL_CONFIGURE_STAMP)
 $(IPMITOOL_CONFIGURE_STAMP): $(IPMITOOL_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
@@ -66,6 +69,7 @@ $(IPMITOOL_CONFIGURE_STAMP): $(IPMITOOL_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP
 		$(IPMITOOL_DIR)/configure			\
 		--prefix=/usr					\
 		--host=$(TARGET)				\
+		--disable-ipmishell				\
 		CFLAGS="$(ONIE_CFLAGS)" 			\
 		LDFLAGS="$(ONIE_LDFLAGS)"
 	$(Q) echo "#undef malloc" >> $(IPMITOOL_DIR)/config.h
