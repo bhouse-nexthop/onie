@@ -54,14 +54,20 @@ LIBAIO_NEW_FILES = $(shell test -d $(LIBAIO_DIR) && test -f $(LIBAIO_BUILD_STAMP
 		      find -L $(LIBAIO_DIR) -newer $(LIBAIO_BUILD_STAMP) -type f -print -quit)
 endif
 
+# libaio's src/Makefile does "CFLAGS ?= ..." then "CFLAGS += -Wall -I.
+# -fPIC", so the ONIE flags go in the environment: a command-line CFLAGS
+# would override the += and drop -fPIC.
 libaio-build: $(LIBAIO_BUILD_STAMP)
 $(LIBAIO_BUILD_STAMP): $(LIBAIO_SOURCE_STAMP) $(LIBAIO_NEW_FILES) | $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Building libaio-$(LIBAIO_VERSION) ===="
-	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(LIBAIO_DIR) \
-		CC=$(CROSSPREFIX)gcc prefix=/usr
-	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(LIBAIO_DIR) \
-		CC=$(CROSSPREFIX)gcc prefix=/usr DESTDIR=$(DEV_SYSROOT) install
+	$(Q) PATH='$(CROSSBIN):$(PATH)' \
+		CFLAGS="$(ONIE_CFLAGS)" LDFLAGS="$(ONIE_LDFLAGS)" \
+		$(MAKE) -C $(LIBAIO_DIR) CC=$(CROSSPREFIX)gcc prefix=/usr
+	$(Q) PATH='$(CROSSBIN):$(PATH)' \
+		CFLAGS="$(ONIE_CFLAGS)" LDFLAGS="$(ONIE_LDFLAGS)" \
+		$(MAKE) -C $(LIBAIO_DIR) CC=$(CROSSPREFIX)gcc prefix=/usr \
+		DESTDIR=$(DEV_SYSROOT) install
 	$(Q) touch $@
 
 libaio-install: $(LIBAIO_INSTALL_STAMP)
