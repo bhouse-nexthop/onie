@@ -1,5 +1,12 @@
 CT_CONFIG_VERSION="4"
 CT_LOCAL_TARBALLS_DIR="${DOWNLOADDIR}"
+# Try GNU's kernel.org mirror first.  crosstool-NG otherwise fetches GNU
+# components only from ftpmirror.gnu.org / ftp.gnu.org, so an outage there
+# stops the toolchain build.  Non-GNU components miss here and fall back to
+# their usual sources; every download is still checked against
+# crosstool-NG's pinned digests.
+CT_USE_MIRROR=y
+CT_MIRROR_BASE_URL="https://mirrors.kernel.org/gnu"
 CT_WORK_DIR="${CT_TOP_DIR}/build"
 CT_PREFIX_DIR="${XTOOLS_INSTALL_DIR}/${CT_TARGET}"
 CT_STRIP_TARGET_TOOLCHAIN_EXECUTABLES=y

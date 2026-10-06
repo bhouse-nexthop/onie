@@ -60,6 +60,7 @@ ifeq ($(GCC_VERSION),14.3.0)
 # crosstool-NG 1.28.0 fetches the GCC 14.3.0 toolchain component set itself
 # (the generated crosstool config enables downloads) using its own pinned
 # per-component checksums, so no component tarballs are pre-fetched here.
+# The defconfig points it at mirrors.kernel.org/gnu before the GNU hosts.
 else
   $(error CT_NG_COMPONENTS download: Unsupported GCC version: $(GCC_VERSION))
 endif
