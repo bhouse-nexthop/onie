@@ -35,7 +35,8 @@ PHONY += openssl openssl-download openssl-source \
 	 openssl-configure openssl-build openssl-install openssl-clean \
 	 openssl-download-clean
 
-# ONIE standardizes on OpenSSL 3.x (SONAME major 3, "engines" dir).
+# ONIE standardizes on OpenSSL 3.x (SONAME major 3).  install_sw puts
+# engines in "engines-3" and providers in "ossl-modules" under libdir.
 ifeq ($(ARCH),arm64)
 OPENSSL_ARCH	= linux-aarch64
 else
@@ -43,7 +44,7 @@ OPENSSL_ARCH	= linux-$(ARCH)
 endif
 
 OPENSSL_LIBS	= \
-	engines \
+	engines-3 ossl-modules \
 	libcrypto.so libcrypto.so.3 \
 	libssl.so libssl.so.3
 
@@ -100,7 +101,7 @@ $(OPENSSL_BUILD_STAMP): $(OPENSSL_NEW_FILES) $(OPENSSL_CONFIGURE_STAMP)
 	$(Q) PATH='$(CROSSBIN):$(PATH)' $(MAKE) -C $(OPENSSL_DIR) \
 		DESTDIR=$(DEV_SYSROOT) install_sw install_ssldirs
 	$(Q) for file in $(OPENSSL_LIBS) ; do \
-		chmod u+w -R $(DEV_SYSROOT)/usr/lib/$$file ; \
+		chmod u+w -R $(DEV_SYSROOT)/usr/lib/$$file || exit 1 ; \
 	     done
 	$(Q) touch $@
 
@@ -110,10 +111,10 @@ $(OPENSSL_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(OPENSSL_BUILD_STAMP) $(ZLIB_IN
 	$(Q) echo "==== Installing openssl in $(SYSROOTDIR) ===="
 	$(Q) cp -av $(DEV_SYSROOT)/usr/ssl $(SYSROOTDIR)/usr
 	$(Q) for file in $(OPENSSL_LIBS) ; do \
-		cp -av $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ ; \
+		cp -av $(DEV_SYSROOT)/usr/lib/$$file $(SYSROOTDIR)/usr/lib/ || exit 1 ; \
 	     done
 	$(Q) for file in $(OPENSSL_BINS) ; do \
-		cp -av $(DEV_SYSROOT)/usr/bin/$$file $(SYSROOTDIR)/usr/bin/ ; \
+		cp -av $(DEV_SYSROOT)/usr/bin/$$file $(SYSROOTDIR)/usr/bin/ || exit 1 ; \
 	     done
 	$(Q) touch $@
 
