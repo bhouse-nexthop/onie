@@ -30,8 +30,7 @@ MTDBINS = mkfs.jffs2 mkfs.ubifs ubinize ubiformat ubinfo mtdinfo
 UBIBINS = ubiattach ubimkvol ubidetach ubirmvol
 
 PHONY += mtdutils mtdutils-download mtdutils-source mtdutils-configure \
-	 mtdutils-build mtdutils-install mtdutils-clean mtdutils-download-clean \
-	 mtdutils-configure-help
+	 mtdutils-build mtdutils-install mtdutils-clean mtdutils-download-clean
 
 mtdutils: $(MTDUTILS_STAMP)
 
@@ -51,13 +50,6 @@ $(MTDUTILS_SOURCE_STAMP): $(USER_TREE_STAMP) | $(MTDUTILS_DOWNLOAD_STAMP)
 	$(Q) echo "==== Extracting upstream mtdutils ===="
 	$(Q) $(SCRIPTDIR)/extract-package $(MTDUTILS_BUILD_DIR) $(DOWNLOADDIR)/$(MTDUTILS_TARBALL)
 	$(Q) touch $@
-
-mtdutils-configure-help: $(UTILLINUX_BUILD_STAMP) $(LZO_BUILD_STAMP) \
-				$(ZLIB_BUILD_STAMP) \
-				$(MTDUTILS_SOURCE_STAMP) | $(DEV_SYSROOT_INIT_STAMP)
-	$(Q) echo "====  Configure help for mtd-utils-$(MTDUTILS_VERSION) ===="
-	$(Q) cd $(MTDUTILS_DIR) && PATH='$(CROSSBIN):$(PATH)'	\
-		$(MTDUTILS_DIR)/configure --help
 
 # mtd-utils 2.x uses an autotools (./configure) build.
 #
