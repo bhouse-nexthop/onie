@@ -11,10 +11,9 @@
 # This is a makefile fragment that defines the build of lvm2
 #
 
-LVM2_VERSION		?= 2.02.105
+LVM2_VERSION		?= 2.03.41
 LVM2_TARBALL		= LVM2.$(LVM2_VERSION).tgz
-LVM2_TARBALL_URLS	+= $(ONIE_MIRROR) http://sourceware.org/pub/lvm2/releases \
-			   http://mirrors.kernel.org/sourceware/lvm2/releases
+LVM2_TARBALL_URLS	+= $(ONIE_MIRROR) https://sourceware.org/ftp/lvm2
 LVM2_BUILD_DIR		= $(USER_BUILDDIR)/lvm2
 LVM2_DIR		= $(LVM2_BUILD_DIR)/LVM2.$(LVM2_VERSION)
 
@@ -46,7 +45,6 @@ LVM2_PROGS = \
   sbin/lvcreate	   \
   sbin/lvdisplay   \
   sbin/lvextend	   \
-  sbin/lvmchange   \
   sbin/lvmdiskscan \
   sbin/lvmsadc	   \
   sbin/lvmsar	   \
@@ -123,7 +121,7 @@ LVM2_CONFIGURE_OVERRIDES	= \
 
 
 lvm2-configure: $(LVM2_CONFIGURE_STAMP)
-$(LVM2_CONFIGURE_STAMP): $(LVM2_SOURCE_STAMP) $(LVM2_PATCH_STAMP)\
+$(LVM2_CONFIGURE_STAMP): $(LVM2_SOURCE_STAMP) $(LVM2_PATCH_STAMP) $(LIBAIO_BUILD_STAMP)\
 	| $(DEV_SYSROOT_INIT_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "====  Configure lvm2-$(LVM2_VERSION) ===="
@@ -132,9 +130,14 @@ $(LVM2_CONFIGURE_STAMP): $(LVM2_SOURCE_STAMP) $(LVM2_PATCH_STAMP)\
 		$(LVM2_DIR)/configure				\
 		--prefix=/usr					\
 		--host=$(TARGET)				\
-		--with-clvmd=none				\
 		--disable-nls					\
 		--disable-selinux				\
+		--disable-readline				\
+		--disable-systemd-journal			\
+		--without-systemd				\
+		--without-udev					\
+		--disable-use-lvmlockd				\
+		--disable-use-lvmpolld				\
 		CC=$(CROSSPREFIX)gcc				\
 		CFLAGS="$(ONIE_CFLAGS)"				\
 		LDFLAGS="$(ONIE_LDFLAGS)"
@@ -151,7 +154,7 @@ $(LVM2_BUILD_STAMP): $(LVM2_CONFIGURE_STAMP) $(UTILLINUX_BUILD_STAMP)
 	$(Q) touch $@
 
 lvm2-install: $(LVM2_INSTALL_STAMP)
-$(LVM2_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(LVM2_BUILD_STAMP) $(UTILLINUX_INSTALL_STAMP)
+$(LVM2_INSTALL_STAMP): $(SYSROOT_INIT_STAMP) $(LVM2_BUILD_STAMP) $(UTILLINUX_INSTALL_STAMP) $(LIBAIO_INSTALL_STAMP)
 	$(Q) rm -f $@ && eval $(PROFILE_STAMP)
 	$(Q) echo "==== Installing lvm2 programs in $(SYSROOTDIR) ===="
 	$(Q) for file in $(LVM2_PROGS) ; do \
