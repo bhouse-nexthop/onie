@@ -10,7 +10,7 @@
 # This is a makefile fragment that defines the build of openssl
 #
 
-OPENSSL_VERSION		?= 3.5.7
+OPENSSL_VERSION		?= 3.5.9
 OPENSSL_TARBALL		= openssl-$(OPENSSL_VERSION).tar.gz
 # openssl.org/source/ only keeps the newest release of each line (older
 # ones move to /source/old/), so prefer the stable per-version GitHub
