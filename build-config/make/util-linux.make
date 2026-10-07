@@ -10,7 +10,7 @@
 # from the util-linux package.
 #
 UTILLINUX_MAJOR_VERSION = 2.41
-UTILLINUX_VERSION		= $(UTILLINUX_MAJOR_VERSION).4
+UTILLINUX_VERSION		= $(UTILLINUX_MAJOR_VERSION).6
 UTILLINUX_TARBALL		= util-linux-$(UTILLINUX_VERSION).tar.xz
 UTILLINUX_TARBALL_URLS		+= $(ONIE_MIRROR) \
 					https://www.kernel.org/pub/linux/utils/util-linux/v$(UTILLINUX_MAJOR_VERSION)/
